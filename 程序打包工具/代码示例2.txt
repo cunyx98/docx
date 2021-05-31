@@ -1,0 +1,97 @@
+如果只是在安装之前判断一个进程是否存在，需要要引入 psvince.dll ，放在Inno Setup的安装目录下，代码如下：
+
+[Files]
+
+; 安装前判断进程， psvince.dll 文件放在Inno Setup的安装目录下
+
+Source: compiler:psvince.dll; Flags: dontcopy noencryption
+[Code] 
+
+;安装前判断是否有进程正在运行
+
+
+function IsModuleLoaded(modulename: String ): Boolean;
+external 'IsModuleLoaded@files:psvince.dll stdcall setuponly';
+
+function InitializeSetup(): Boolean;
+var
+value: string;
+IsAppRunning: boolean;
+
+begin
+value := ExpandConstant('{cm:DiagnosisRunning}'); 
+Result:= true;
+IsAppRunning:= IsModuleLoaded('进程名：如mysql.exe');
+while IsAppRunning do
+begin
+if MsgBox('**进程正在运行，请先关闭它！', mbConfirmation, MB_OKCANCEL) = IDOK then
+IsAppRunning:= IsModuleLoaded('进程名：如mysql.exe')
+else
+begin
+IsAppRunning:= false;
+Result:= false;
+end;
+end;
+end;
+
+ 
+
+ 安装、卸载前检测进程运行情况并关闭相应进程，代码如下：
+
+[Files]
+
+ ;需要在Files下加上这句
+
+Source: ISTask.dll; DestDir: {app}; Flags: ignoreversion; Attribs: hidden
+[Code]
+
+ ;安装前判断是否有进程正在运行，istask.dll文件放到inno setup安装目录下
+
+
+function RunTask(FileName: string; bFullpath: Boolean): Boolean;
+external 'RunTask@files:ISTask.dll stdcall delayload';
+function KillTask(ExeFileName: string): Integer;
+external 'KillTask@files:ISTask.dll stdcall delayload';
+
+function InitializeSetup(): Boolean;
+var
+ResultStr: String;
+ResultCode: Integer;
+begin
+Result:= true; 
+if RunTask('{#MyAppExeName}', false) then
+begin
+if MsgBox('安装程序检测到 {#MyAppName} 正在运行！'#13''#13'单击“是”按钮关闭程序；'#13''#13'单击“否”按钮退出安装！', mbConfirmation, MB_YESNO) = IDYES then
+KillTask('{#MyAppExeName}');
+Result:= true; 
+end
+else Result:= true;
+end;
+
+ ;卸载前判断进程是否在运行，istask.dll文件和打包的exe文件放在一起
+
+
+function RunTaskU(FileName: string; bFullpath: Boolean): Boolean;
+external 'RunTask@{app}\ISTask.dll stdcall delayload uninstallonly';
+function KillTaskU(ExeFileName: string): Integer;
+external 'KillTask@{app}\ISTask.dll stdcall delayload uninstallonly';
+
+function InitializeUninstall(): Boolean;
+begin
+Result:= true;
+if RunTaskU('{#MyAppExeName}', false) then
+begin
+if MsgBox('卸载程序检测到 {#MyAppName} 正在运行！'#13''#13'单击“是”按钮关闭程序；'#13''#13'单击“否”按钮退出卸载！', mbConfirmation, MB_YESNO) = IDYES then
+KillTaskU('{#MyAppExeName}');
+Result:= true;
+end
+else Result:= true;
+UnloadDll(ExpandConstant('{app}\ISTask.dll'));
+end;
+
+ 
+
+补充
+如果用的是Unicode版本的 Inno Setup ,上面的代码不能起到检测进程、杀进程的功能。
+解决方法:
+将 string 换成 ansistring 就可以了
