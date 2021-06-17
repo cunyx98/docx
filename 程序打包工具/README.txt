@@ -9,6 +9,8 @@ https://github.com/linxinfa/Beautiful-InnoSetup-Demo/blob/main/backup/ChineseSim
 
 3.打包方法及过程请访问 https://linxinfa.blog.csdn.net/article/details/106104818
 
+打包前在.exe文件下，进入cmd,输入命令"windeployqt 程序名.exe",等待结束。
+
 4.美化方法及过程请访问 https://linxinfa.blog.csdn.net/article/details/108995508
 
 5.检测程序是否在运行，卸载时监测是否在运行代码示例-- 代码示例2.txt 

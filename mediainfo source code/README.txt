@@ -1,0 +1,1 @@
+解压后，libmediainfo_AllInclusive\MediaInfoLib\Project路径下，编译对应的平台
